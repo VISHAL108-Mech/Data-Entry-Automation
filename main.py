@@ -5,9 +5,13 @@ from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from time import sleep
+from dotenv import load_dotenv
+import os
 
-URL = "https://appbrewery.github.io/Zillow-Clone/"
-FORM_URL = "https://forms.gle/jktZhW9LkQHDCmxR6"
+load_dotenv()
+
+URL = os.getenv("SITE_URL")
+FORM_URL = os.getenv("FORM_URL")
 
 
 def main():
@@ -18,7 +22,7 @@ def main():
         r = requests.get(url=URL)
         data = r.text
         soup = BeautifulSoup(data, "html.parser")
-    except r.raise_for_status as e:
+    except Exception as e:
         print(f"Error fetching the webpage: {e}")
         return
 
