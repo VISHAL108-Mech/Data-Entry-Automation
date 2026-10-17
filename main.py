@@ -14,18 +14,22 @@ def main():
     """Fetch listings, then submit each row to the form."""
 
     # Pull the page HTML and parse the listing data.
-    r = requests.get(url=URL)
-    data = r.text
-    soup = BeautifulSoup(data, "html.parser")
+    try:
+        r = requests.get(url=URL)
+        data = r.text
+        soup = BeautifulSoup(data, "html.parser")
+    except r.raise_for_status as e:
+        print(f"Error fetching the webpage: {e}")
+        return
 
     # Collect the price, address, and listing link for each property.
-    prices = soup.find_all(name="span",
-                           class_="PropertyCardWrapper__StyledPriceLine")
+    prices = soup.find_all(name="span", class_="PropertyCardWrapper__StyledPriceLine")
     price_list = [price.text.replace("+", "/").split("/")[0] for price in prices]
 
     addresses = soup.find_all(name="address")
-    address_list = [address.getText().replace(" | ", "").strip() for address in
-                   addresses]
+    address_list = [
+        address.getText().replace(" | ", "").strip() for address in addresses
+    ]
 
     links = soup.find_all(name="a", class_="StyledPropertyCardDataArea-anchor")
     link_list = [link.get("href") for link in links]
@@ -36,24 +40,36 @@ def main():
     driver = webdriver.Chrome(options=chrome_options)
 
     for i in range(len(price_list)):
-        driver.get(url=FORM_URL)
+        try:
+            driver.get(url=FORM_URL)
+        except Exception as e:
+            print(f"Error occurred while navigating to the form: {e}")
+            continue
         sleep(2)
 
-        address_input = driver.find_element(By.XPATH,
-                                            "//*[@id='mG61Hd']/div[2]/div/div[2]/div[1]/div/div/div[2]/div/div[1]/div/div[1]/input")
-        price_input = driver.find_element(By.XPATH,
-                                          "//*[@id='mG61Hd']/div[2]/div/div[2]/div[2]/div/div/div[2]/div/div[1]/div/div[1]/input")
-        link_input = driver.find_element(By.XPATH,
-                                         "//*[@id='mG61Hd']/div[2]/div/div[2]/div[3]/div/div/div[2]/div/div[1]/div/div[1]/input")
-        button = driver.find_element(By.XPATH,
-                                     "//*[@id='mG61Hd']/div[2]/div/div[3]/div[1]/div[1]/div/span/span")
+        address_input = driver.find_element(
+            By.XPATH,
+            "//*[@id='mG61Hd']/div[2]/div/div[2]/div[1]/div/div/div[2]/div/div[1]/div/div[1]/input",
+        )
+        price_input = driver.find_element(
+            By.XPATH,
+            "//*[@id='mG61Hd']/div[2]/div/div[2]/div[2]/div/div/div[2]/div/div[1]/div/div[1]/input",
+        )
+        link_input = driver.find_element(
+            By.XPATH,
+            "//*[@id='mG61Hd']/div[2]/div/div[2]/div[3]/div/div/div[2]/div/div[1]/div/div[1]/input",
+        )
+        button = driver.find_element(
+            By.XPATH, "//*[@id='mG61Hd']/div[2]/div/div[3]/div[1]/div[1]/div/span/span"
+        )
 
         address_input.send_keys(address_list[i])
         price_input.send_keys(price_list[i])
         link_input.send_keys(link_list[i])
-        button.click()
-
-    driver.quit()
+        try:
+            button.click()
+        except Exception as e:
+            print(f"Error occurred while clicking the submit button: {e}")
 
 
 if __name__ == "__main__":
